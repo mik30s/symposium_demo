@@ -21,16 +21,16 @@ class ServoController:
     MOVE_CMD = 'm'
 
     def __init__(self):
-        self.ser = serial.Serial('/dev/ttyACM0')
+        self.ser = serial.Serial('/dev/ttyACM1')
         self.ser.baudrate = 9600
     
-    def update_joint_angles(sef,angles, x, y):
+    def update_joint_angles(self,x, y):
         """
         Moves the motor by 1 degree.
         """
-        # rotate points 90 degrees clockwise
-        px,py = y,x
-        #print("center: ", py, px)
+        a2 = np.ceil(np.arctan2(np.sqrt(1-((x**2 + y**2 - 6**2 - 10**2)/2*6*10)),(x**2 + y**2 - 6**2 - 10**2)/2*6*10))
+        a1 = np.ceil(np.arctan2(y,x) - np.arctan2(10*np.sin(a2), 6+10*np.cos(a2)))
+        return a1, a2
 
     def send(self,cmd, servo_pos_array):
         """
@@ -38,17 +38,18 @@ class ServoController:
         """
         state = self.ser.read();
         print("state: ", state)
-        a1 = int(servo_positions[JOINT_A1])
-        a2 = int(servo_positions[JOINT_A2])
+        a1 = int(servo_pos_array[JOINT_A1])
+        a2 = int(servo_pos_array[JOINT_A2])
+        print "a1, a2 = ", a1, a2
 
         if (state == 'w'):
-            if (cmd == self.START_CMD):
-                self.ser.write(struct.pack('I', ord(self.START_CMD)))
-                sleep(2)
-
-            self.ser.write(str(a1) + '\n')
-            self.ser.write(str(a2) + '\n')
-            sleep(0.5)
+            if (cmd == self.START_CMD
+                or cmd == self.MOVE_CMD):
+                self.ser.write(struct.pack('b',ord(cmd)))
+                self.ser.flush()
+            sleep(1)
+            self.ser.write(str(a1)+'s')
+            self.ser.write(str(a2)+'s')
 
 
 def adjust_gamma(img, gamma=1.0):
@@ -89,9 +90,9 @@ if __name__ == '__main__':
     # on start set arm to base poition.
     servo_positions = [float(a) * 5.115 for a in angles]
     print("start angles (A1=90,A2=90) (servo): ", servo_positions)
-    servo_cntl.send(servo_cntl.START_CMD, servo_positions)
+    servo_cntl.send(servo_cntl.START_CMD, servo_positions)   
 
-    # start streaming frames from camera
+    #start streaming frames from camera
     while True:
         hasFrame, frame = camera.read()
 
@@ -112,11 +113,13 @@ if __name__ == '__main__':
 
         # find the objects external (outermost) contours.
         _, contours, _ = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(mask, contours, 0, (0,255,0), 3)
         center = None
 
         if len(contours) > 0:
-            # use the largest counter by area
-            # and use it to compute the encclosing circle
+            #use the largest counter by area
+            #and use it to compute the encclosing circle
+           
             largest_contour = max(contours, key=cv2.contourArea)
             (x, y), radius = cv2.minEnclosingCircle(largest_contour)
             # find the most intense regions of the circle
@@ -125,16 +128,12 @@ if __name__ == '__main__':
             if M["m00"] == 0: M["m00"] = 1
             center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
 
-            servo_cntl.update_joint_angles(angles, x=center[0], y=center[1])
-
             # draw a circle at the center
             if radius > 10:
                 # draw outer circle
-                cv2.circle(frame, (int(x), int(y)), int(radius), (255,0,0), 2)
+                cv2.circle(frame, (int(x), int(y)), int(radius), (0,255,0), 2)
                 # draw inner circle
-                cv2.circle(frame, center, 5, (0,0,255), -1)
-
-                point_trail.append(center)
+                cv2.circle(frame, center, 5, (0,255,255), -1)
 
                 for i in range(len(point_trail)):
                     if point_trail[i - 1] == None or point_trail[i] == None:
@@ -148,10 +147,10 @@ if __name__ == '__main__':
                         cv2.putText(frame, "dx: {}, dy: {}".format(dx, dy),
                                     (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
                                     0.35, (0, 0, 255), 1)
-                    cv2.line(frame, point_trail[i - 1], point_trail[i], (0,0,255), 2)
 
         cv2.imshow('image', frame)
         cv2.imshow('mask', mask)
+        cv2.imshow('hsv', hsv)
 
         if (cv2.waitKey(1) & 255) == ord('q'):
             break

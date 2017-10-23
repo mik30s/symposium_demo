@@ -2,7 +2,7 @@
 
 SCServo servoChain;
 #define START_CMD "s"
-#define READY_CMD "r"
+#define MOVE_CMD "m"
 #define WAIT_CMD  "w"
 
 int ar[7] = {1, 2,3,4,5, 6, 7};
@@ -36,17 +36,18 @@ void setup()
  
   initServos();
   // wait for start command
-  cmd = Serial.readString();
-  while (!cmd.equals(START_CMD)) {
+  cmd = Serial.read();
+  while (cmd != START_CMD) {
+    Serial.println("command was: " + cmd);
     delay(1000);
-    cmd = Serial.readString();
+    cmd = Serial.read();
     Serial.write(WAIT_CMD);
   }
  
   Serial.println("started with: "+ cmd + '\n');
-  int a1 = readServoAngle();
-  int a2 = readServoAngle();
-  Serial.println("Moving to base with: a1=" + String(a1) + " a2=" + String(a2));
+  long a1 = readServoAngle();
+  long a2 = readServoAngle();
+  Serial.println("[setup] Moving to base with: a1=" + String(a1) + " a2=" + String(a2));
   
   // set arm to base pose
   moveArm(a1,a2,3000);
@@ -58,7 +59,18 @@ void setup()
 
 void loop()
 {
+  cmd = Serial.read();
+  while (!cmd.equals(MOVE_CMD)) {
+    delay(1000);
+    cmd = Serial.read();
+    Serial.write(WAIT_CMD);
+  }
   
+  long a1 = readServoAngle();
+  long a2 = readServoAngle();
+  Serial.println("[loop] Moving to base with: a1=" + String(a1) + " a2=" + String(a2));
+  // set arm to base pose
+  moveArm(a1,a2,3000);
 }
 
 
