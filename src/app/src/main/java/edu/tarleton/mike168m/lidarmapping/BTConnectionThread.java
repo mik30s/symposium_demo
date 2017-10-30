@@ -49,8 +49,8 @@ public class BTConnectionThread extends Thread {
         }
         catch(IOException ex) {
             try {socket.close();}
-            catch(IOException ed){ed.printStackTrace();}
-            ex.printStackTrace();
+            catch(IOException ed){Log.e(TAG,ex.getMessage());}
+            Log.e(TAG,ex.getMessage());
         }
     }
 

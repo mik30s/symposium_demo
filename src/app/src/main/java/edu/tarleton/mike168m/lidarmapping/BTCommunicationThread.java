@@ -5,9 +5,12 @@ import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 import android.widget.TextView;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import static android.content.ContentValues.TAG;
 
 public class BTCommunicationThread extends Thread {
     private BluetoothSocket socket;
@@ -24,25 +27,23 @@ public class BTCommunicationThread extends Thread {
 
     @Override
     public void run() {
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[256];
         int bytes;
-
-        while(true) {
-            try{
-                bytes = istream.read(buffer);
-                final String strReceived = new String(buffer, 0, bytes);
-                final String strByteCnt = String.valueOf(bytes) + " bytes received.\n";
-
+        try {
+            while(true) {
+                DataInputStream distream = new DataInputStream(istream);
+                distream.readFully(buffer, 0, buffer.length);
+                final String readings = new String(buffer, 0, buffer.length);
+                //Log.i(TAG, "Read "+bytes+" bytes.");
                 mainActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        ((TextView)mainActivity.findViewById(R.id.rraw_data_textview)).setText(strReceived);
+                        ((TextView)mainActivity.findViewById(R.id.rraw_data_textview)).setText(readings);
                     }
                 });
             }
-            catch(IOException ex){
-                ex.printStackTrace();
-            }
+        } catch(IOException ex){
+            ex.printStackTrace();
         }
     }
 }

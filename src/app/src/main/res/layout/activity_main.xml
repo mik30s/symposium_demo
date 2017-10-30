@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context="edu.tarleton.mike168m.lidarmapping.MainActivity">
 
+
     <TextView
         android:id="@+id/rraw_data_textview"
         android:layout_width="0dp"

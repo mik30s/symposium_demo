@@ -2,10 +2,12 @@ package edu.tarleton.mike168m.lidarmapping;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
 
     public final int REQUEST_ENABLE_BT = 1;
     public static TextView rawDataView;
+    private Canvas canvas;
 
     private void initialize() {
         bta = BluetoothAdapter.getDefaultAdapter();
@@ -34,12 +37,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         rawDataView = findViewById(R.id.rraw_data_textview);
+        LinearLayout mainLayout =
+                (LinearLayout)findViewById(R.id.);
+        mainLayout.addView();
         initialize();
     }
 
